@@ -7,17 +7,22 @@ const app = express();
 const PORT = 5000;
 const DATA_FILE = "./data.json";
 const MEDICAL_FILE = "./medical_details.json";
+const APPOINTMENT_FILE = "./appointment.json";
 
 // ✅ Middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ Ensure both data files exist
+// ✅ Ensure 3   data files exist
 if (!fs.existsSync(DATA_FILE)) {
   fs.writeFileSync(DATA_FILE, "[]");
 }
 if (!fs.existsSync(MEDICAL_FILE)) {
   fs.writeFileSync(MEDICAL_FILE, "[]");
+}
+
+if (!fs.existsSync(APPOINTMENT_FILE)) {
+  fs.writeFileSync(APPOINTMENT_FILE, "[]");
 }
 
 // ✅ Route to handle basic patient info submission
@@ -89,6 +94,30 @@ app.post("/medical_details", (req, res) => {
       console.log("✅ Medical details saved.");
       res.status(200).json({ message: "Medical details saved!" });
     });
+  });
+});
+
+
+
+// POST route to store appointment data
+app.post("/appointment", (req, res) => {
+  const newAppt = req.body;
+
+  fs.readFile(APPOINTMENT_FILE, "utf8", (err, data) => {
+    const existing = data ? JSON.parse(data) : [];
+    existing.push({ ...newAppt, status: "pending" }); // status added
+
+    fs.writeFile(APPOINTMENT_FILE, JSON.stringify(existing, null, 2), (err) => {
+      if (err) return res.status(500).send("Error saving appointment");
+      res.status(200).json({ message: "Appointment saved" });
+    });
+  });
+});
+
+app.get("/appointment", (req, res) => {
+  fs.readFile(APPOINTMENT_FILE, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error reading appointments");
+    res.json(JSON.parse(data));
   });
 });
 
